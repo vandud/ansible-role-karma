@@ -1,0 +1,142 @@
+---
+karma_repo_url: "https://github.com/prymitive/karma"
+karma_download_url: "{{ karma_repo_url }}/releases/download/{{ karma_version }}/karma-linux-amd64.tar.gz"
+karma_version: "v0.119"
+
+karma_system_user: "karma"
+karma_system_group: "karma"
+
+karma_conf_dir: "/etc/karma"
+karma_bin_dir: "/usr/local/bin"
+
+karma_args: ""  # extra cli flags to karma binary
+
+# https://github.com/prymitive/karma/blob/main/docs/CONFIGURATION.md
+karma_conf:
+  authentication:
+    basicAuth:
+      users:
+        - username: admin
+          password: admin
+  alertmanager:
+    interval: 10s
+    servers:
+      - name: am1
+        cluster: alertmanager
+        uri: http://alertmanager-1.local:9093
+        timeout: 10s
+        proxy: true
+        readonly: false
+      - name: am2
+        cluster: alertmanager
+        uri: http://alertmanager-2.local:9093
+        timeout: 10s
+        proxy: true
+        readonly: false
+      - name: am3
+        cluster: alertmanager
+        uri: http://alertmanager-3.local:9093
+        timeout: 10s
+        proxy: true
+        readonly: false
+  alertAcknowledgement:
+    enabled: true
+    duration: 15m0s
+    author: karma
+    comment: "ACK! This alert was acknowledged using karma on %NOW%"
+  annotations:
+    default:
+      hidden: true
+    hidden: []
+    visible: []
+    keep: []
+    order: []
+  filters:
+    default: []
+  grid:
+    sorting:
+      order: label
+      reverse: false
+      label: severity
+      customValues:
+        labels:
+          env:
+            prod: 1
+            test: 2
+            dev: 3
+          severity:
+            critical: 1
+            warning: 2
+            info: 3
+    auto:
+      ignore: []
+      order:
+        - severity
+        - env
+    groupLimit: 40
+  history:
+    enabled: true
+    timeout: 20s
+    workers: 30
+    rewrite: []
+  karma:
+    name: Karma
+  labels:
+    color:
+      static:
+        - env
+      unique:
+        - instance
+        - '@receiver'
+      custom:
+        severity:
+          - value: info
+            color: "#87c4e0"
+          - value: warning
+            color: "#ffae42"
+          - value: critical
+            color: "#ff220c"
+          - value_re: ".*"
+            color: "#736598"
+    valueOnly:
+      - instance
+      - env
+      - alertname
+      - severity
+  listen:
+    address: "0.0.0.0"
+    port: 8080
+    prefix: /
+    cors:
+      allowedOrigins:
+        - https://karma.example.com
+  ui:
+    refresh: 10s
+    hideFiltersWhenIdle: true
+    colorTitlebar: false
+    theme: auto
+    animations: true
+    minimalGroupWidth: 420
+    alertsPerGroup: 5
+    collapseGroups: collapsedOnMobile
+    multiGridLabel: "@cluster"
+
+### kthxbye settings ###
+karma_kthxbye_enabled: true
+
+karma_kthxbye_repo_url: "https://github.com/prymitive/kthxbye"
+karma_kthxbye_download_url: "{{ karma_kthxbye_repo_url }}/releases/download/{{ karma_kthxbye_version }}/kthxbye-linux-amd64.tar.gz"
+karma_kthxbye_version: "v0.16"
+karma_kthxbye_system_user: "kthxbye"
+karma_kthxbye_system_group: "kthxbye"
+karma_kthxbye_bin_dir: "/usr/local/bin"
+
+karma_kthxbye_alertmanager_timeout: 1m0s
+karma_kthxbye_alertmanager_uri: http://localhost:9093
+karma_kthxbye_extendby: 15m0s
+karma_kthxbye_extendifexpiringin: 5m0s
+karma_kthxbye_extendwithprefix: "ACK!"
+karma_kthxbye_interval: 45s
+karma_kthxbye_listen: ":8081"
+karma_kthxbye_logjson: false
+karma_kthxbye_maxduration: 168h

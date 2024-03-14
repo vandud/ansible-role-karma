@@ -1,0 +1,12 @@
+---
+- name: restart karma service
+  systemd:
+    daemon_reload: true
+    name: karma
+    state: restarted
+
+- name: restart kthxbye service
+  systemd:
+    daemon_reload: true
+    name: kthxbye
+    state: restarted

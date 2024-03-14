@@ -1,0 +1,33 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+Description=Kthxbye (Alertmanager Acknoledges)
+Documentation=https://github.com/prymitive/kthxbye
+After=network.target
+
+[Service]
+Type=simple
+User={{ karma_kthxbye_system_user }}
+Group={{ karma_kthxbye_system_group }}
+StartLimitBurst=5
+StartLimitInterval=0
+Restart=always
+ExecStart={{ karma_kthxbye_bin_dir }}/kthxbye \
+  -alertmanager.timeout={{ karma_kthxbye_alertmanager_timeout }} \
+  -alertmanager.uri={{ karma_kthxbye_alertmanager_uri }} \
+  -extend-by={{ karma_kthxbye_extendby }} \
+  -extend-if-expiring-in={{ karma_kthxbye_extendifexpiringin }} \
+  -extend-with-prefix={{ karma_kthxbye_extendwithprefix }} \
+  -interval={{ karma_kthxbye_interval }} \
+  -listen={{ karma_kthxbye_listen }} \
+  -log-json={{ karma_kthxbye_logjson }} \
+  -max-duration={{ karma_kthxbye_maxduration }}
+
+ExecStop=/bin/kill -s SIGTERM $MAINPID
+
+PrivateTmp=yes
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

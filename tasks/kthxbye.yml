@@ -1,0 +1,48 @@
+---
+
+- name: Check if kthxbye is installed
+  stat:
+    path: "{{ karma_kthxbye_bin_dir }}/kthxbye"
+  changed_when: false
+  check_mode: false
+  register: kthxbye_is_installed
+
+- name: Create kthxbye system group
+  group:
+    name: "{{ karma_kthxbye_system_group }}"
+    state: present
+    system: true
+  when: karma_kthxbye_system_group != "root"
+
+- name: Create kthxbye system user
+  user:
+    name: "{{ karma_kthxbye_system_user }}"
+    groups: "{{ karma_kthxbye_system_group }}"
+    append: true
+    shell: /sbin/nologin
+    system: true
+    createhome: false
+  when: karma_kthxbye_system_user != "root"
+
+- name: Download kthxbye from {{ karma_kthxbye_download_url }}
+  unarchive:
+    src: "{{ karma_kthxbye_download_url }}"
+    dest: "{{ karma_kthxbye_bin_dir }}"
+    extra_opts:
+      - --transform
+      - 's/kthxbye-linux-amd64/kthxbye/'
+    owner: "{{ karma_kthxbye_system_user }}"
+    group: "{{ karma_kthxbye_system_group }}"
+    remote_src: True
+  when:
+    - not ansible_check_mode
+    - kthxbye_is_installed.stat.exists == False
+
+- name: Create systemd unit file for kthxbye
+  template:
+    src: kthxbye.service.j2
+    dest: /etc/systemd/system/kthxbye.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart kthxbye service

@@ -1,0 +1,78 @@
+---
+
+- name: Check if karma is installed
+  stat:
+    path: "{{ karma_bin_dir }}/karma"
+  changed_when: false
+  check_mode: false
+  register: karma_is_installed
+
+- name: Check current karma version
+  command: "{{ karma_bin_dir }}/karma --version"
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  register: karma_current_version
+  when: karma_is_installed.stat.exists == True
+
+- name: Create karma system group
+  group:
+    name: "{{ karma_system_group }}"
+    state: present
+    system: true
+  when: karma_system_group != "root"
+
+- name: Create karma system user
+  user:
+    name: "{{ karma_system_user }}"
+    groups: "{{ karma_system_group }}"
+    append: true
+    shell: /sbin/nologin
+    system: true
+    createhome: false
+  when: karma_system_user != "root"
+
+- name: Download karma from {{ karma_download_url }}
+  unarchive:
+    src: "{{ karma_download_url }}"
+    dest: "{{ karma_bin_dir }}"
+    extra_opts:
+      - --transform
+      - 's/karma-linux-amd64/karma/'
+    owner: "{{ karma_system_user }}"
+    group: "{{ karma_system_group }}"
+    remote_src: True
+  when:
+    - not ansible_check_mode
+    - karma_is_installed.stat.exists == False or
+      karma_version not in karma_current_version.stdout
+
+- name: Create systemd unit file for karma
+  template:
+    src: karma.service.j2
+    dest: /etc/systemd/system/karma.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart karma service
+
+- name: Ensure conf dir is exist
+  file:
+    state: directory
+    path: "{{ karma_conf_dir }}"
+    owner: "{{ karma_system_user }}"
+    group: "{{ karma_system_group }}"
+    mode: 0755
+
+- name: Create karma.conf
+  template:
+    src: karma.yaml.j2
+    dest: "{{  karma_conf_dir }}/karma.yaml"
+    owner: "{{ karma_system_user }}"
+    group: "{{ karma_system_group }}"
+    mode: 0644
+  notify: restart karma service
+
+- name: Deploy kthxbye
+  include_tasks: kthxbye.yml
+  when: karma_kthxbye_enabled

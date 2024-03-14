@@ -1,0 +1,24 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+Description=Karma
+Documentation=https://github.com/prymitive/karma
+After=network.target
+
+[Service]
+Type=simple
+User={{ karma_system_user }}
+Group={{ karma_system_group }}
+StartLimitBurst=5
+StartLimitInterval=0
+Restart=always
+ExecStart={{ karma_bin_dir }}/karma --config.file {{ karma_conf_dir }}/karma.yaml {% if karma_args is defined and karma_args | length %}{{ karma_args }}{% endif %}
+
+ExecStop=/bin/kill -s SIGTERM $MAINPID
+
+PrivateTmp=yes
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
